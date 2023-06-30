@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import cv2
 from scipy.signal import StateSpace
 from simulator import TIME_STEP
 
@@ -10,11 +9,11 @@ l_m = 0.3
 m_Kg = 0.2
 M_Kg = 0.5
 I = 0.006
-b_fric = 0.5
+b_fric = 0.9
 
 
 class CartPendSys:
-    def __init__(self, theta=(1/2)*np.pi):
+    def __init__(self, theta=0.05 * np.pi):
         # State Space Y
         # Y = [x, theta, x_dot, theta_dot]
         # Y_dot = Ax + Bu
@@ -46,13 +45,13 @@ class CartPendSys:
         # States: [x, theta, x_dot, theta_dot]
         # **2pi theta is straight down**
         '''
-             pi
+             0
         3pi/2    pi/2
-            0/2pi
+            pi
         '''
         self.states = np.array([[0], [theta], [0], [0]])
         self.previous_states = self.states
-        self.pend_target_rads = 2*np.pi
+        self.pend_target_rads = 0.
 
         # Track stats for plotting
         self.K_tracking = []
@@ -62,7 +61,7 @@ class CartPendSys:
         self.error_tracking = []
 
     def get_error(self):
-        error = self.pend_target_rads - (self.previous_states[1] % (2. * np.pi))
+        error = self.pend_target_rads - self.previous_states[1]
         return error
 
     def update_states(self, K):
@@ -87,7 +86,7 @@ class CartPendSys:
 
     def plot_sim_results(self):
         for item, title in zip([self.K_tracking, self.integral_tracking, self.theta_tracking, self.cart_x_tracking, self.error_tracking],
-                               ['K', 'Integral', 'Cart X', 'Error']):
+                               ['K', 'Integral', 'theta', 'Cart X', 'Error']):
             plt.figure()
             plt.plot(range(len(item)-1), item[1:])
             plt.title(title)

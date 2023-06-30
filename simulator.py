@@ -1,12 +1,11 @@
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
+from matplotlib.patches import Rectangle, ConnectionPatch
 import numpy as np
 
 # GLOBAL PARAMS
 TIMER = 0
-SET_POINTS = 10000  # int(30/1E-3)
-g = 9.81
+SET_POINTS = 10000
 TIME_STEP = 0.001
 
 
@@ -25,9 +24,10 @@ class Simulator:
         self.xdata, self.ydata = [], []
         self.pend_xdata, self.pend_ydata = [], []
         self.time_text = self.ax.text(0.05, 0.9, '', transform=self.ax.transAxes)
-        self.patch = self.ax.add_patch(Rectangle((0, 0), 0, 0, linewidth=1, edgecolor='k', facecolor='g'))
+        self.cart_patch = self.ax.add_patch(Rectangle((0, 0), 0, 0, linewidth=1, edgecolor='k', facecolor='g'))
+        self.pend_patch = self.ax.add_patch(ConnectionPatch((0, 0), (0, 0), 'data', arrowstyle='-'))
         self.ln, = self.ax.plot([], [], 'ro')
-        self.cart_width = 0.3
+        self.cart_width = 0.7
         self.cart_height = 0.2
 
         return
@@ -44,6 +44,7 @@ class Simulator:
             error = self.sys.get_error()
 
             K, integral = self.get_pid_controls(previous_error, error, integral)
+
             self.sys.update_states(K=K)
             self.sys.update_tracked_states(K=K, integral=integral, error=error)
 
@@ -54,44 +55,44 @@ class Simulator:
     def get_pid_controls(self, prev_error, error, integral):
 
         # PID Coefficients
-        Kp = 5
-        Kd = 5
-        Ki = 0
+        Kp = -10
+        Kd = -10
+        Ki = -5
 
         derivative = (error - prev_error) / TIME_STEP
         integral += error * TIME_STEP
         K = Kp*error + Kd*derivative + Ki*integral
-
-        K = 0
-        integral = 0
 
         return K, integral
 
     def sim_init_fn(self,):
         self.ln.set_data([], [])
         self.time_text.set_text('')
-        self.patch.set_xy((-self.cart_width / 2, -self.cart_height / 2))
-        self.patch.set_width(self.cart_width)
-        self.patch.set_height(self.cart_height)
+        self.cart_patch.set_xy((-self.cart_width / 2, -self.cart_height / 2))
+        self.cart_patch.set_width(self.cart_width)
+        self.cart_patch.set_height(self.cart_height)
+        self.pend_patch.xy1 = self.cart_patch.get_center()
 
         # Set solution data
         self.xdata = self.sys.cart_x_tracking
-        self.pend_xdata = np.sin(self.sys.theta_tracking) * 0.8
-        self.pend_ydata = np.cos(self.sys.theta_tracking) * 0.8
+        self.pend_xdata = np.sin(self.sys.theta_tracking) * 0.9
+        self.pend_ydata = np.cos(self.sys.theta_tracking) * 0.9
         # Offset values with cart x values
         self.pend_xdata = self.pend_xdata + self.xdata
 
-        print(f'Solution Length: {len(self.pend_xdata)}')
+        self.pend_patch.xy2 = self.pend_xdata, self.pend_ydata
 
-        return self.ln, self.time_text, self.patch
+        return self.ln, self.time_text, self.cart_patch, self.pend_patch
 
     def sim_update_fn(self, frame_idx):
         thisx = [self.xdata[frame_idx], self.pend_xdata[frame_idx]]
         thisy = [0, self.pend_ydata[frame_idx]]
         self.ln.set_data(thisx, thisy)
-        self.time_text.set_text(f'{frame_idx}')
-        self.patch.set_x(self.xdata[frame_idx] - self.cart_width / 2)
-        return self.ln, self.time_text, self.patch
+        self.time_text.set_text(f'idx: {frame_idx} -- Theta: {self.sys.theta_tracking[frame_idx]:.2f} -- Cart X: {self.sys.cart_x_tracking[frame_idx]:.2f}')
+        self.cart_patch.set_x(self.xdata[frame_idx] - self.cart_width / 2)
+        self.pend_patch.xy1 = self.cart_patch.get_center()
+        self.pend_patch.xy2 = self.pend_xdata[frame_idx], self.pend_ydata[frame_idx]
+        return self.ln, self.time_text, self.cart_patch, self.pend_patch
 
     def display_simulation(self, solution_data):
         xdata = solution_data
