@@ -6,5 +6,5 @@ To-Do:
 - [X] Create simulator framework
 - [X] Implement visualization
 - [X] Implement conventional PID control
-- [ ] Implement nudge to stabilized pendulum
+- [X] Implement nudge to stabilized pendulum
 - [ ] Create NN-based control
