@@ -5,7 +5,7 @@ import numpy as np
 
 # GLOBAL PARAMS
 TIMER = 0
-SET_POINTS = 10000
+SET_POINTS = 13000
 TIME_STEP = 0.001
 
 
@@ -35,12 +35,21 @@ class Simulator:
     def run(self):
         num_steps = 0
         integral = 0
+        stable_sys_count = 0
+        disturbed_flag = False
 
         self.sys.update_states(K=integral)
         previous_error = self.sys.get_error()
 
         while num_steps <= self.total_steps:
             num_steps += 1
+
+            if np.abs(previous_error) < 0.001 and not disturbed_flag:
+                stable_sys_count += 1
+            if stable_sys_count == 30 and not disturbed_flag:
+                disturbed_flag = True
+                self.sys.bump_pendulum()
+
             error = self.sys.get_error()
 
             K, integral = self.get_pid_controls(previous_error, error, integral)

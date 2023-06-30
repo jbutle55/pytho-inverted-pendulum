@@ -49,7 +49,7 @@ class CartPendSys:
         3pi/2    pi/2
             pi
         '''
-        self.states = np.array([[0], [theta], [0], [0]])
+        self.states = np.array([[1.0], [theta], [0], [0]])
         self.previous_states = self.states
         self.pend_target_rads = 0.
         self.cart_target_m = 0.
@@ -78,6 +78,10 @@ class CartPendSys:
             states[1] = -2 * np.pi + states[1]
 
         self.previous_states = states
+        return
+
+    def bump_pendulum(self):
+        self.previous_states[1] += 0.05 * np.pi
         return
 
     def update_tracked_states(self, K, integral, error):
