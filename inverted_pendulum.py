@@ -52,6 +52,7 @@ class CartPendSys:
         self.states = np.array([[0], [theta], [0], [0]])
         self.previous_states = self.states
         self.pend_target_rads = 0.
+        self.cart_target_m = 0.
 
         # Track stats for plotting
         self.K_tracking = []
@@ -61,7 +62,10 @@ class CartPendSys:
         self.error_tracking = []
 
     def get_error(self):
-        error = self.pend_target_rads - self.previous_states[1]
+        pend_error = self.pend_target_rads - self.previous_states[1]
+        cart_error = self.cart_target_m - self.previous_states[0]
+        error = pend_error + cart_error
+
         return error
 
     def update_states(self, K):
